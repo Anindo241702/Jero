@@ -29,6 +29,7 @@ class LLMProvider(ABC):
     """Async chat-completion provider."""
 
     name: str
+    model: str = "unknown"
 
     @abstractmethod
     async def chat(
@@ -49,6 +50,7 @@ class OpenAICompatProvider(LLMProvider):
 
     def __init__(self, name: str, config: ProviderConfig) -> None:
         self.name = name
+        self.model = config.model
         self._config = config
         self._client = httpx.AsyncClient(
             base_url=config.base_url.rstrip("/"),

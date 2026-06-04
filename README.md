@@ -73,6 +73,20 @@ python main.py --text              # hardware-free text REPL (needs only API key
 speakers, or model files — type a message and Jero prints the reply. No model
 is loaded in this mode.
 
+### Autonomy engine (idle-time self-improvement)
+When `autonomy.enabled` is true in `config.json`, Jero monitors the message bus
+and, after `idle_seconds_before_research` of no activity, picks the next
+unchecked item from `autonomy_backlog.md`, researches it via Groq, generates an
+implementation via NVIDIA NIM, and writes everything to a timestamped folder
+under `proposals/` (git-ignored) — `metadata.json`, `research.md`, `proposal.md`,
+and the code as `proposal.py.txt`.
+
+**Safety:** Jero never executes generated code and never overwrites existing
+files; each proposal is isolated in its own directory for you to review before
+merging. Activity on the bus immediately pauses the engine. Processed backlog
+items are tracked in `proposals/.processed.json` (the backlog file is not
+modified).
+
 ### Models
 faster-whisper (`base`/`small`) downloads automatically into `models/whisper/`
 on first run. For Piper, set `audio.tts.voice_url` and `audio.tts.config_url` in
