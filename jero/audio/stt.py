@@ -55,6 +55,12 @@ class STTEngine:
         self._model = await run_blocking(self._executor, self._load_model, models_dir)
         logger.info("STT model ready")
 
+    def unload(self) -> None:
+        """Drop the model reference so it can be garbage-collected (frees RAM)."""
+        if self._model is not None:
+            logger.info("Unloading STT model")
+            self._model = None
+
     def _load_model(self, models_dir: Path) -> Any:
         # Imported lazily so the package imports without the heavy dependency.
         from faster_whisper import WhisperModel

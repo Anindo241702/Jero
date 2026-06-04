@@ -49,6 +49,10 @@ class AudioPipeline:
         consumer task not having run yet.
         """
         self._stop.clear()
+        # Models reside in memory only while the pipeline is running: load on
+        # start, free on stop. Engines may be absent (e.g. text-only mode) or
+        # lightweight stand-ins (console) without a load method.
+        await self._load_engines()
         transcript_q = self._bus.subscribe(TOPIC_TRANSCRIPT)
         response_q = self._bus.subscribe(TOPIC_RESPONSE)
         speak_q = self._bus.subscribe(TOPIC_SPEAK)
@@ -68,7 +72,20 @@ class AudioPipeline:
             task.cancel()
         await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks.clear()
+        self._unload_engines()
         logger.info("Audio pipeline stopped")
+
+    async def _load_engines(self) -> None:
+        for engine in (self._stt, self._tts):
+            load = getattr(engine, "load", None)
+            if callable(load):
+                await load()
+
+    def _unload_engines(self) -> None:
+        for engine in (self._stt, self._tts):
+            unload = getattr(engine, "unload", None)
+            if callable(unload):
+                unload()
 
     async def _reasoning_loop(self, queue: asyncio.Queue) -> None:
         """Consume transcripts, ask the Brain, publish responses."""

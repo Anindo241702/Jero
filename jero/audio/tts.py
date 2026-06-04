@@ -87,6 +87,12 @@ class TTSEngine:
         self._voice = await run_blocking(self._executor, self._load_voice)
         logger.info("TTS voice ready")
 
+    def unload(self) -> None:
+        """Drop the voice reference so it can be garbage-collected (frees RAM)."""
+        if self._voice is not None:
+            logger.info("Unloading TTS voice")
+            self._voice = None
+
     def _load_voice(self) -> Any:
         from piper.voice import PiperVoice
 

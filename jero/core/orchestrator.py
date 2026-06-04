@@ -9,11 +9,12 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from jero.audio.console import ConsoleTTS, read_console_line
 from jero.audio.pipeline import AudioPipeline
 from jero.audio.stt import STTEngine
 from jero.audio.tts import TTSEngine
 from jero.brain.brain import Brain
-from jero.core.bus import MessageBus
+from jero.core.bus import TOPIC_TRANSCRIPT, MessageBus
 from jero.core.config import Config, load_config
 from jero.core.executor import SharedExecutor
 from jero.core.logging import setup_logging
@@ -48,12 +49,10 @@ class Orchestrator:
         return cls(config)
 
     async def startup(self) -> None:
-        """Verify/preload models so failures surface before we accept input."""
+        """Start the pipeline. Models are loaded by ``pipeline.start`` so they
+        reside in memory only while the pipeline is running, and are freed on
+        ``pipeline.stop``."""
         logger.info("Jero starting up (max_workers=%d)", self._config.max_workers)
-        # Ensure TTS voice files are present (downloads if URLs configured).
-        await self._tts.ensure_models()
-        # Preload models concurrently to cut first-utterance latency.
-        await asyncio.gather(self._stt.load(), self._tts.load())
         await self._pipeline.start()
         logger.info("Jero is ready.")
 
@@ -73,3 +72,35 @@ class Orchestrator:
             pass
         finally:
             await self.shutdown()
+
+    async def run_text(self) -> None:
+        """Hardware-free REPL: type input -> Brain -> printed reply.
+
+        Exercises the real bus + reasoning/speaking loops with no microphone,
+        speakers, STT, or TTS model files. Only the API keys are required.
+        """
+        console_tts = ConsoleTTS()
+        pipeline = AudioPipeline(
+            bus=self._bus,
+            stt=None,  # no STT: input comes from the console
+            tts=console_tts,
+            brain=self._brain,
+            sample_rate=self._config.audio.sample_rate,
+        )
+        await pipeline.start()
+        print("Jero text mode. Type a message, or '/exit' to quit.", flush=True)
+        try:
+            while True:
+                line = await read_console_line(self._executor.executor)
+                if line.strip().lower() in {"/exit", "/quit"}:
+                    break
+                if not line.strip():
+                    continue
+                await self._bus.publish(TOPIC_TRANSCRIPT, line)
+        except (EOFError, KeyboardInterrupt):
+            pass
+        finally:
+            await pipeline.stop()
+            await self._brain.aclose()
+            self._executor.shutdown(wait=True)
+            print("Goodbye.", flush=True)

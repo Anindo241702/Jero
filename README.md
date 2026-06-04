@@ -65,8 +65,13 @@ cp config.example.json config.json # adjust models/paths as needed
 
 ruff check .                       # lint
 pytest -q                          # tests (mock LLM/audio; no keys/models needed)
-python main.py                     # run Jero
+python main.py                     # run Jero (full voice mode)
+python main.py --text              # hardware-free text REPL (needs only API keys)
 ```
+
+`--text` mode exercises the real bus + Brain + pipeline with no microphone,
+speakers, or model files — type a message and Jero prints the reply. No model
+is loaded in this mode.
 
 ### Models
 faster-whisper (`base`/`small`) downloads automatically into `models/whisper/`
