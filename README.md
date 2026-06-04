@@ -36,3 +36,41 @@ Jero uses a **Producer-Consumer asynchronous pipeline** for zero-latency perform
 
 ## ⚠️ Important Note
 Jero is optimized for **speed and autonomy**. All AI tasks, including self-coding and research, run in background threads to keep the system responsive. **Do not modify the main execution loop to be sequential.**
+
+## 📦 Project Structure
+```
+jero/
+├── core/            # config, message bus, shared executor, logging, orchestrator
+├── brain/           # NVIDIA NIM (reasoning/coding) + Groq (research) providers
+├── audio/           # faster-whisper STT + Piper TTS + producer-consumer pipeline
+├── autonomy/        # idle-time self-improvement engine (scaffold)
+├── os_interaction/  # sandboxed filesystem / app / document handlers (scaffold)
+└── utils/           # async helpers (executor offload, retry/backoff)
+main.py              # async entrypoint
+```
+
+The whole system is `asyncio`-based. Every blocking call (model inference, audio
+I/O, OS calls) is offloaded to a single shared, bounded `ThreadPoolExecutor`, so
+the event loop never blocks. Modules communicate over an `asyncio.Queue` message
+bus (producer-consumer).
+
+## 🧑‍💻 Development
+```bash
+python -m venv venv
+# Windows: venv\Scripts\activate   |   Unix: source venv/bin/activate
+pip install -r requirements-dev.txt
+
+cp .env.example .env               # add NVIDIA_API_KEY, GROQ_API_KEY
+cp config.example.json config.json # adjust models/paths as needed
+
+ruff check .                       # lint
+pytest -q                          # tests (mock LLM/audio; no keys/models needed)
+python main.py                     # run Jero
+```
+
+### Models
+faster-whisper (`base`/`small`) downloads automatically into `models/whisper/`
+on first run. For Piper, set `audio.tts.voice_url` and `audio.tts.config_url` in
+`config.json` to the Bangla voice's `.onnx` / `.onnx.json` URLs; Jero downloads
+them into `models/piper/` and verifies their presence before starting the
+pipeline. The `models/` directory is git-ignored.

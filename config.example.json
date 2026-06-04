@@ -1,0 +1,49 @@
+{
+  "brain": {
+    "nvidia": {
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "meta/llama-3.1-70b-instruct",
+      "timeout_seconds": 60,
+      "max_tokens": 1024,
+      "temperature": 0.2
+    },
+    "groq": {
+      "base_url": "https://api.groq.com/openai/v1",
+      "model": "llama-3.1-8b-instant",
+      "timeout_seconds": 30,
+      "max_tokens": 1024,
+      "temperature": 0.4
+    }
+  },
+  "audio": {
+    "sample_rate": 16000,
+    "stt": {
+      "model_size": "base",
+      "device": "cpu",
+      "compute_type": "int8",
+      "language": "bn",
+      "beam_size": 1,
+      "models_dir": "models/whisper"
+    },
+    "tts": {
+      "voice": "bn_BD-custom-medium",
+      "models_dir": "models/piper",
+      "voice_url": "",
+      "config_url": ""
+    }
+  },
+  "executor": {
+    "max_workers": 4
+  },
+  "autonomy": {
+    "idle_seconds_before_research": 120,
+    "enabled": false
+  },
+  "os_interaction": {
+    "sandbox_root": "workspace",
+    "allowed_apps": ["notepad", "calc", "explorer"]
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}
