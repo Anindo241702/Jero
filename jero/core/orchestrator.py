@@ -100,6 +100,9 @@ class Orchestrator:
             sample_rate=self._config.audio.sample_rate,
         )
         await pipeline.start()
+        if self._config.autonomy.enabled:
+            self._autonomy.start()
+            logger.info("Autonomy engine enabled.")
         print("Jero text mode. Type a message, or '/exit' to quit.", flush=True)
         try:
             while True:
@@ -112,6 +115,7 @@ class Orchestrator:
         except (EOFError, KeyboardInterrupt):
             pass
         finally:
+            await self._autonomy.stop()
             await pipeline.stop()
             await self._brain.aclose()
             self._executor.shutdown(wait=True)
