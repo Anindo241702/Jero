@@ -47,6 +47,14 @@ class Brain:
             groq=GroqProvider(config.groq),
         )
 
+    @property
+    def nvidia_model(self) -> str:
+        return self._nim.model
+
+    @property
+    def groq_model(self) -> str:
+        return self._groq.model
+
     async def reason(
         self,
         prompt: str,

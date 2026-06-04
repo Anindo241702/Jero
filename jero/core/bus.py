@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
@@ -32,6 +33,8 @@ class MessageBus:
     def __init__(self, maxsize: int = 100) -> None:
         self._maxsize = maxsize
         self._subscribers: dict[str, list[asyncio.Queue[Message]]] = defaultdict(list)
+        # Monotonic timestamp of the last publish; used for idle detection.
+        self._last_activity: float = time.monotonic()
 
     def subscribe(self, topic: str) -> asyncio.Queue[Message]:
         """Register a subscriber and return its dedicated queue."""
@@ -43,10 +46,20 @@ class MessageBus:
         """Publish a payload to all subscribers of ``topic``.
 
         Applies backpressure: if a subscriber's queue is full, this awaits.
+        Every publish counts as activity for idle detection.
         """
+        self.mark_activity()
         message = Message(topic=topic, payload=payload)
         subscribers = self._subscribers.get(topic, [])
         if not subscribers:
             logger.debug("No subscribers for topic '%s'; dropping message", topic)
             return
         await asyncio.gather(*(q.put(message) for q in subscribers))
+
+    def mark_activity(self) -> None:
+        """Record that activity just happened (resets the idle timer)."""
+        self._last_activity = time.monotonic()
+
+    def seconds_since_last_activity(self) -> float:
+        """Seconds elapsed since the last publish / ``mark_activity`` call."""
+        return time.monotonic() - self._last_activity

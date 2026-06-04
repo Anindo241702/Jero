@@ -36,8 +36,12 @@
     "max_workers": 4
   },
   "autonomy": {
-    "idle_seconds_before_research": 120,
-    "enabled": false
+    "enabled": false,
+    "idle_seconds_before_research": 60,
+    "poll_interval_seconds": 5,
+    "cooldown_seconds": 60,
+    "backlog_path": "autonomy_backlog.md",
+    "proposals_dir": "proposals"
   },
   "os_interaction": {
     "sandbox_root": "workspace",

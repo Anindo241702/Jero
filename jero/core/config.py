@@ -62,6 +62,10 @@ class AudioConfig:
 class AutonomyConfig:
     enabled: bool = False
     idle_seconds_before_research: int = 120
+    poll_interval_seconds: float = 5.0
+    cooldown_seconds: float = 60.0
+    backlog_path: str = "autonomy_backlog.md"
+    proposals_dir: str = "proposals"
 
 
 @dataclass(frozen=True)
@@ -168,6 +172,10 @@ def load_config(
         idle_seconds_before_research=int(
             autonomy_raw.get("idle_seconds_before_research", 120)
         ),
+        poll_interval_seconds=float(autonomy_raw.get("poll_interval_seconds", 5)),
+        cooldown_seconds=float(autonomy_raw.get("cooldown_seconds", 60)),
+        backlog_path=autonomy_raw.get("backlog_path", "autonomy_backlog.md"),
+        proposals_dir=autonomy_raw.get("proposals_dir", "proposals"),
     )
 
     executor_raw = raw.get("executor", {})

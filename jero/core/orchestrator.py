@@ -13,6 +13,7 @@ from jero.audio.console import ConsoleTTS, read_console_line
 from jero.audio.pipeline import AudioPipeline
 from jero.audio.stt import STTEngine
 from jero.audio.tts import TTSEngine
+from jero.autonomy.engine import AutonomyEngine
 from jero.brain.brain import Brain
 from jero.core.bus import TOPIC_TRANSCRIPT, MessageBus
 from jero.core.config import Config, load_config
@@ -41,6 +42,13 @@ class Orchestrator:
             brain=self._brain,
             sample_rate=config.audio.sample_rate,
         )
+        self._autonomy = AutonomyEngine(
+            brain=self._brain,
+            bus=self._bus,
+            config=config.autonomy,
+            repo_root=config.repo_root,
+            executor=self._executor.executor,
+        )
 
     @classmethod
     def from_default_config(cls) -> Orchestrator:
@@ -54,10 +62,14 @@ class Orchestrator:
         ``pipeline.stop``."""
         logger.info("Jero starting up (max_workers=%d)", self._config.max_workers)
         await self._pipeline.start()
+        if self._config.autonomy.enabled:
+            self._autonomy.start()
+            logger.info("Autonomy engine enabled.")
         logger.info("Jero is ready.")
 
     async def shutdown(self) -> None:
         logger.info("Jero shutting down...")
+        await self._autonomy.stop()
         await self._pipeline.stop()
         await self._brain.aclose()
         self._executor.shutdown(wait=True)

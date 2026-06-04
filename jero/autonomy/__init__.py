@@ -1,5 +1,5 @@
-"""Autonomy engine (idle-time self-improvement).
+"""Autonomy engine: idle-time self-improvement (research + code proposals)."""
 
-Planned for a follow-up PR: during idle time, use Groq to research candidate
-features and NVIDIA NIM to generate implementations. See ``engine.py``.
-"""
+from jero.autonomy.engine import AutonomyEngine
+
+__all__ = ["AutonomyEngine"]

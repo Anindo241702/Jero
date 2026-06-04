@@ -5,6 +5,9 @@ config.json
 # Models (auto-downloaded at runtime)
 /models/
 
+# Auto-generated autonomy proposals (reviewed by a human, not committed by Jero)
+/proposals/
+
 # Virtual environments
 /venv/
 .venv/
